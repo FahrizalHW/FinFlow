@@ -1,6 +1,6 @@
 {
-    "name": "finflow_app",
-    "short_name": "finflow_app",
+    "name": "project_sederhana",
+    "short_name": "project_sederhana",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
