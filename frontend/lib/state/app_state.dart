@@ -25,6 +25,24 @@ class AppState extends ChangeNotifier {
     notifyListeners();
     return null;
   }
+
+  /// null = sukses, selain itu isinya pesan error dari server.
+  Future<String?> signup(
+    String username,
+    String password,
+    String passwordConfirmation,
+  ) async {
+    try {
+      await _auth.register(
+        username: username,
+        password: password,
+        passwordConfirmation: passwordConfirmation,
+      );
+    } on ApiException catch (e) {
+      return e.message;
+    }
+    return null;
+  }
 }
 
 class AppStateScope extends InheritedNotifier<AppState> {
