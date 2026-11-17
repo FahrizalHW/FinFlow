@@ -209,6 +209,61 @@ class AppState extends ChangeNotifier {
         return null;
     }
   }
+
+    // ---------------- Transaksi ----------------
+  /// null = sukses, selain itu isinya pesan error dari server.
+  Future<String?> addTransaction({
+    required String title,
+    required double amount,
+    required String type,
+    required int categoryId,
+    required DateTime date,
+    String? notes,
+  }) async {
+    try {
+      await _transactionService.create(
+        title: title,
+        amount: amount,
+        type: type,
+        categoryId: categoryId,
+        date: date,
+        notes: notes,
+      );
+    } on ApiException catch (e) {
+      return e.message;
+    }
+    await refreshAll(); // saldo, riwayat, dan beranda dihitung ulang server
+    return null;
+  }
+
+  // ---------------- Kategori ----------------
+  /// Hanya menyaring daftar untuk tampilan dropdown (sesuai tab jenis).
+  List<CategoryModel> getCategoriesByType(String type) {
+    final lower = type.toLowerCase();
+    return _categories.where((c) => c.type.toLowerCase() == lower).toList();
+  }
+
+  Future<String?> addCategory(String name, String type) async {
+    try {
+      await _categoryService.create(name: name, type: type.toLowerCase());
+      _categories = await _categoryService.fetchAll();
+    } on ApiException catch (e) {
+      return e.message;
+    }
+    notifyListeners();
+    return null;
+  }
+
+  /// Aturan "hapus kategori = hapus semua transaksinya" ada di backend.
+  Future<String?> deleteCategory(int categoryId) async {
+    try {
+      await _categoryService.delete(categoryId);
+    } on ApiException catch (e) {
+      return e.message;
+    }
+    await refreshAll();
+    return null;
+  }
 }
 
 class AppStateScope extends InheritedNotifier<AppState> {

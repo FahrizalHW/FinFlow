@@ -1,18 +1,17 @@
 import '../models/history_result.dart';
 import '../models/summary_model.dart';
+import '../models/transaction_model.dart';
 import 'api_client.dart';
 
 class TransactionService {
   TransactionService(this._api);
   final ApiClient _api;
 
-  /// Saldo, total bulan ini, dan transaksi terbaru (dihitung server).
   Future<SummaryModel> fetchSummary() async {
     final data = await _api.get('/ringkasan') as Map<String, dynamic>;
     return SummaryModel.fromJson(data);
   }
 
-  /// Riwayat. Pemfilteran, pengurutan, dan penjumlahan dilakukan di server.
   Future<HistoryResult> fetchHistory({
     String? type,
     String? categoryName,
@@ -20,17 +19,36 @@ class TransactionService {
     DateTime? endDate,
   }) async {
     final data = await _api.get('/transaksi', query: {
-      'jenis': ?type,
-      'kategori': ?categoryName,
+      if (type != null) 'jenis': type,
+      if (categoryName != null) 'kategori': categoryName,
       if (startDate != null) 'tanggal_mulai': _dateOnly(startDate),
       if (endDate != null) 'tanggal_akhir': _dateOnly(endDate),
     }) as Map<String, dynamic>;
-
     return HistoryResult.fromJson(data);
   }
 
+  Future<TransactionModel> create({
+    required String title,
+    required double amount,
+    required String type,
+    required int categoryId,
+    required DateTime date,
+    String? notes,
+  }) async {
+    final data = await _api.post('/transaksi', body: {
+      'nama_transaksi': title,
+      'nominal': amount,
+      'jenis_transaksi': type,
+      'id_kategori': categoryId,
+      'tanggal_transaksi':
+          '${_dateOnly(date)} ${_two(date.hour)}:${_two(date.minute)}:00',
+      'catatan': notes,
+    }) as Map<String, dynamic>;
+    return TransactionModel.fromJson(data['data'] as Map<String, dynamic>);
+  }
+
   String _dateOnly(DateTime d) =>
-      '${d.year.toString().padLeft(4, '0')}-'
-      '${d.month.toString().padLeft(2, '0')}-'
-      '${d.day.toString().padLeft(2, '0')}';
+      '${d.year.toString().padLeft(4, '0')}-${_two(d.month)}-${_two(d.day)}';
+
+  String _two(int n) => n.toString().padLeft(2, '0');
 }
