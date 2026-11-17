@@ -26,5 +26,16 @@ class AuthService {
       'password_confirmation': passwordConfirmation,
     });
   }
+  
+  Future<void> logout() async {
+    try {
+      await _api.post('/logout');
+    } on ApiException {
+      // Token mungkin sudah tidak berlaku; sesi lokal tetap dibersihkan.
+    } finally {
+      await _api.clearToken();
+    }
+  }
+
 
 }
