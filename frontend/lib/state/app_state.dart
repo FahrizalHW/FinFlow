@@ -1,19 +1,24 @@
 import 'package:flutter/material.dart';
+import '../models/category_model.dart';
+import '../models/history_result.dart';
 import '../models/summary_model.dart';
 import '../models/transaction_model.dart';
 import '../models/user_model.dart';
 import '../services/api_client.dart';
 import '../services/auth_service.dart';
+import '../services/category_service.dart';
 import '../services/transaction_service.dart';
 
 class AppState extends ChangeNotifier {
   AppState({ApiClient? apiClient}) : _api = apiClient ?? ApiClient() {
     _auth = AuthService(_api);
+    _categoryService = CategoryService(_api);
     _transactionService = TransactionService(_api);
   }
 
   final ApiClient _api;
   late final AuthService _auth;
+  late final CategoryService _categoryService;
   late final TransactionService _transactionService;
 
   // ---------------- Sesi ----------------
@@ -29,7 +34,9 @@ class AppState extends ChangeNotifier {
       return e.message;
     }
     _activeNavIndex = 0;
-    await loadSummary();
+    _historyTab = 'Semua';
+    _resetFilterValues();
+    await refreshAll();
     notifyListeners();
     return null;
   }
@@ -55,7 +62,12 @@ class AppState extends ChangeNotifier {
     await _auth.logout();
     _currentUser = null;
     _summary = null;
+    _historyTransactions = [];
+    _historyTotal = 0;
+    _categories = [];
     _activeNavIndex = 0;
+    _historyTab = 'Semua';
+    _resetFilterValues();
     _loadError = null;
     notifyListeners();
   }
@@ -72,9 +84,62 @@ class AppState extends ChangeNotifier {
     }
   }
 
+  // Pilihan filter di Riwayat (dikirim ke backend sebagai parameter).
+  String _historyTab = 'Semua'; // 'Semua', 'Pemasukan', 'Pengeluaran'
+  DateTime? _filterStartDate;
+  DateTime? _filterEndDate;
+  String? _filterCategory;
+
+  String get historyTab => _historyTab;
+  DateTime? get filterStartDate => _filterStartDate;
+  DateTime? get filterEndDate => _filterEndDate;
+  String? get filterCategory => _filterCategory;
+
+  bool get isFilterActive =>
+      _filterStartDate != null ||
+      _filterEndDate != null ||
+      _filterCategory != null;
+
+  Future<void> setHistoryTab(String tab) async {
+    _historyTab = tab;
+    notifyListeners();
+    await loadHistory();
+  }
+
+  Future<void> applyFilter({
+    DateTime? startDate,
+    DateTime? endDate,
+    String? category,
+  }) async {
+    _filterStartDate = startDate;
+    _filterEndDate = endDate;
+    _filterCategory =
+        (category == null || category.isEmpty || category == 'Semua Kategori')
+            ? null
+            : category;
+    notifyListeners();
+    await loadHistory();
+  }
+
+  Future<void> resetFilter() async {
+    _resetFilterValues();
+    notifyListeners();
+    await loadHistory();
+  }
+
+  void _resetFilterValues() {
+    _filterStartDate = null;
+    _filterEndDate = null;
+    _filterCategory = null;
+  }
+
   // ---------------- Data dari backend ----------------
   SummaryModel? _summary;
+  List<TransactionModel> _historyTransactions = [];
+  double _historyTotal = 0;
+  List<CategoryModel> _categories = [];
   String? _loadError;
+
   String? get loadError => _loadError;
 
   double get totalBalance => _summary?.balance ?? 0;
@@ -83,14 +148,66 @@ class AppState extends ChangeNotifier {
   List<TransactionModel> get recentTransactions =>
       _summary?.recentTransactions ?? const [];
 
-  Future<void> loadSummary() async {
+  /// Riwayat yang sudah difilter dan diurutkan oleh backend.
+  List<TransactionModel> get filteredTransactions => _historyTransactions;
+
+  /// Angka di atas daftar riwayat, dihitung backend sesuai tab dan filter.
+  double get displayedSum => _historyTotal;
+
+  List<CategoryModel> get categories => List.unmodifiable(_categories);
+
+  /// Muat ulang kategori, ringkasan Beranda, dan riwayat.
+  Future<void> refreshAll() async {
     try {
-      _summary = await _transactionService.fetchSummary();
+      final results = await Future.wait([
+        _categoryService.fetchAll(),
+        _transactionService.fetchSummary(),
+        _transactionService.fetchHistory(
+          type: _historyTypeParam(),
+          categoryName: _filterCategory,
+          startDate: _filterStartDate,
+          endDate: _filterEndDate,
+        ),
+      ]);
+
+      _categories = results[0] as List<CategoryModel>;
+      _summary = results[1] as SummaryModel;
+      final history = results[2] as HistoryResult;
+      _historyTransactions = history.transactions;
+      _historyTotal = history.displayedTotal;
       _loadError = null;
     } on ApiException catch (e) {
-      _loadError = e.message;
+      if (isAuthenticated) _loadError = e.message;
     }
     notifyListeners();
+  }
+
+  Future<void> loadHistory() async {
+    try {
+      final history = await _transactionService.fetchHistory(
+        type: _historyTypeParam(),
+        categoryName: _filterCategory,
+        startDate: _filterStartDate,
+        endDate: _filterEndDate,
+      );
+      _historyTransactions = history.transactions;
+      _historyTotal = history.displayedTotal;
+      _loadError = null;
+    } on ApiException catch (e) {
+      if (isAuthenticated) _loadError = e.message;
+    }
+    notifyListeners();
+  }
+
+  String? _historyTypeParam() {
+    switch (_historyTab) {
+      case 'Pemasukan':
+        return 'pemasukan';
+      case 'Pengeluaran':
+        return 'pengeluaran';
+      default:
+        return null;
+    }
   }
 }
 
