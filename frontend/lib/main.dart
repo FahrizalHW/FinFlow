@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'constants/app_colors.dart';
-import 'screens/auth/login_screen.dart';
+import 'screens/splash_screen.dart';
 import 'state/app_state.dart';
 
 void main() {
@@ -64,7 +64,7 @@ class _FinFlowAppState extends State<FinFlowApp> {
             child: child!,
           );
         },
-        home: const LoginScreen(),
+        home: const SplashScreen(),
       ),
     );
   }
