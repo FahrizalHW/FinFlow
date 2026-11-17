@@ -14,4 +14,17 @@ class AuthService {
     await _api.saveToken(data['token'] as String);
     return UserModel.fromJson(data['user'] as Map<String, dynamic>);
   }
+
+  Future<void> register({
+    required String username,
+    required String password,
+    required String passwordConfirmation,
+  }) async {
+    await _api.post('/register', body: {
+      'username': username,
+      'password': password,
+      'password_confirmation': passwordConfirmation,
+    });
+  }
+
 }
