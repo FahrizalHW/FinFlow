@@ -115,8 +115,8 @@ class AppState extends ChangeNotifier {
     _filterEndDate = endDate;
     _filterCategory =
         (category == null || category.isEmpty || category == 'Semua Kategori')
-            ? null
-            : category;
+        ? null
+        : category;
     notifyListeners();
     await loadHistory();
   }
@@ -210,7 +210,7 @@ class AppState extends ChangeNotifier {
     }
   }
 
-    // ---------------- Transaksi ----------------
+  // ---------------- Transaksi ----------------
   /// null = sukses, selain itu isinya pesan error dari server.
   Future<String?> addTransaction({
     required String title,
@@ -258,6 +258,55 @@ class AppState extends ChangeNotifier {
   Future<String?> deleteCategory(int categoryId) async {
     try {
       await _categoryService.delete(categoryId);
+    } on ApiException catch (e) {
+      return e.message;
+    }
+    await refreshAll();
+    return null;
+  }
+
+  // ---------------- Detail, edit, hapus transaksi ----------------
+  /// Mencari transaksi di data yang sudah dimuat (riwayat atau ringkasan).
+  TransactionModel? findTransaction(int id) {
+    for (final t in _historyTransactions) {
+      if (t.id == id) return t;
+    }
+    for (final t in recentTransactions) {
+      if (t.id == id) return t;
+    }
+    return null;
+  }
+
+  /// null = sukses, selain itu isinya pesan error dari server.
+  Future<String?> updateTransaction({
+    required int id,
+    required String title,
+    required double amount,
+    required String type,
+    required int categoryId,
+    required DateTime date,
+    String? notes,
+  }) async {
+    try {
+      await _transactionService.update(
+        id: id,
+        title: title,
+        amount: amount,
+        type: type,
+        categoryId: categoryId,
+        date: date,
+        notes: notes,
+      );
+    } on ApiException catch (e) {
+      return e.message;
+    }
+    await refreshAll(); // saldo dan daftar dihitung ulang server
+    return null;
+  }
+
+  Future<String?> deleteTransaction(int id) async {
+    try {
+      await _transactionService.delete(id);
     } on ApiException catch (e) {
       return e.message;
     }

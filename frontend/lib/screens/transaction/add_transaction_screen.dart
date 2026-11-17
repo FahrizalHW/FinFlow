@@ -2,13 +2,17 @@ import 'package:flutter/material.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_styles.dart';
 import '../../models/category_model.dart';
+import '../../models/transaction_model.dart';
 import '../../state/app_state.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
 import '../category/category_dropdown.dart';
 
 class AddTransactionScreen extends StatefulWidget {
-  const AddTransactionScreen({super.key});
+  /// Diisi saat mengedit transaksi; null berarti tambah transaksi baru.
+  final TransactionModel? transaction;
+
+  const AddTransactionScreen({super.key, this.transaction});
 
   @override
   State<AddTransactionScreen> createState() => _AddTransactionScreenState();
@@ -24,6 +28,26 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   DateTime _selectedDate = DateTime.now();
   TimeOfDay _selectedTime = TimeOfDay.now();
   CategoryModel? _selectedCategory;
+  int? _pendingCategoryId; // kategori awal saat mode edit
+
+  bool get _isEdit => widget.transaction != null;
+
+  @override
+  void initState() {
+    super.initState();
+    final tx = widget.transaction;
+    if (tx != null) {
+      _selectedType = tx.type.toLowerCase();
+      _titleController.text = tx.title;
+      _nominalController.text = tx.amount == tx.amount.roundToDouble()
+          ? tx.amount.toInt().toString()
+          : tx.amount.toString();
+      _notesController.text = tx.notes ?? '';
+      _selectedDate = tx.date;
+      _selectedTime = TimeOfDay.fromDateTime(tx.date);
+      _pendingCategoryId = tx.categoryId;
+    }
+  }
 
   @override
   void dispose() {
@@ -119,21 +143,35 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
     );
 
     final state = AppStateScope.of(context);
-    final error = await state.addTransaction(
-      title: _titleController.text.trim(),
-      amount: nominal,
-      type: _selectedType,
-      categoryId: _selectedCategory!.id,
-      date: finalDateTime,
-      notes: _notesController.text.trim(),
-    );
+    final existing = widget.transaction;
+    final error = existing == null
+        ? await state.addTransaction(
+            title: _titleController.text.trim(),
+            amount: nominal,
+            type: _selectedType,
+            categoryId: _selectedCategory!.id,
+            date: finalDateTime,
+            notes: _notesController.text.trim(),
+          )
+        : await state.updateTransaction(
+            id: existing.id,
+            title: _titleController.text.trim(),
+            amount: nominal,
+            type: _selectedType,
+            categoryId: _selectedCategory!.id,
+            date: finalDateTime,
+            notes: _notesController.text.trim(),
+          );
 
     if (error != null) {
       _showMessage(error);
       return;
     }
 
-    _showMessage('Transaksi berhasil ditambahkan', isError: false);
+    _showMessage(
+      _isEdit ? 'Transaksi berhasil diperbarui' : 'Transaksi berhasil ditambahkan',
+      isError: false,
+    );
     if (mounted) Navigator.of(context).pop();
   }
 
@@ -141,6 +179,13 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   Widget build(BuildContext context) {
     final state = AppStateScope.of(context);
     final categories = state.getCategoriesByType(_selectedType);
+
+    // Mode edit: pilih kategori awal milik transaksi (sekali saja).
+    if (_pendingCategoryId != null) {
+      final match = categories.where((c) => c.id == _pendingCategoryId);
+      if (match.isNotEmpty) _selectedCategory = match.first;
+      _pendingCategoryId = null;
+    }
 
     // If selectedCategory is no longer in the list (e.g. type changed or deleted)
     if (_selectedCategory != null && !categories.any((c) => c.id == _selectedCategory!.id)) {
@@ -152,8 +197,8 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text(
-          'Tambah Transaksi',
+        title: Text(
+          _isEdit ? 'Edit Transaksi' : 'Tambah Transaksi',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w700,
@@ -413,7 +458,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
 
                 // Action Buttons: Tambah Transaksi & Batal (Matches Gambar L5.11)
                 CustomButton(
-                  text: 'Tambah Transaksi',
+                  text: _isEdit ? 'Simpan Perubahan' : 'Tambah Transaksi',
                   variant: ButtonVariant.primary,
                   height: 48,
                   onPressed: _saveTransaction,
@@ -433,3 +478,4 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
     );
   }
 }
+
