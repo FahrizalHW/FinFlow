@@ -72,6 +72,23 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+    /// SEMENTARA: hanya mengubah data di aplikasi, belum dikirim ke backend.
+  /// Password belum dipakai di sini; nanti dikirim lewat endpoint backend.
+  void updateProfile({
+    String? username,
+    String? password,
+    String? profilePhoto,
+  }) {
+    if (_currentUser == null) return;
+    final newName =
+        (username != null && username.trim().isNotEmpty) ? username.trim() : null;
+    _currentUser = _currentUser!.copyWith(
+      username: newName,
+      profilePhoto: profilePhoto,
+    );
+    notifyListeners();
+  }
+
   // ---------------- State tampilan ----------------
   // Tab aktif (0: Beranda, 1: Riwayat, 2: Akun)
   int _activeNavIndex = 0;

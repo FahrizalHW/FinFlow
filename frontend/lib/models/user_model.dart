@@ -12,4 +12,12 @@ class UserModel {
       profilePhoto: json['foto_profil'] as String?,
     );
   }
+
+  UserModel copyWith({String? username, String? profilePhoto}) {
+    return UserModel(
+      id: id,
+      username: username ?? this.username,
+      profilePhoto: profilePhoto ?? this.profilePhoto,
+    );
+  }
 }
