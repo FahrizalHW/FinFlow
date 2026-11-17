@@ -31,13 +31,16 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
-
     final state = AppStateScope.of(context);
-    final error = await state.login(
-      _usernameController.text.trim(),
-      _passwordController.text,
-    );
-
+    String? error;
+    try {
+      error = await state.login(
+        _usernameController.text.trim(),
+        _passwordController.text,
+      );
+    } catch (_) {
+      error = 'Gagal memuat data. Periksa koneksi atau server.';
+    }
     if (!mounted) return;
     setState(() => _isLoading = false);
 
