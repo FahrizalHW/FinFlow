@@ -136,8 +136,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       if (val == null || val.isEmpty) {
                         return 'Password harus diisi';
                       }
-                      if (val.length < 6) {
-                        return 'Password minimal 6 karakter';
+                      if (val.length < 8) {
+                        return 'Password minimal 8 karakter';
                       }
                       return null;
                     },

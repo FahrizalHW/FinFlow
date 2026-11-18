@@ -38,32 +38,27 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
     super.dispose();
   }
 
-  void _saveAccount() {
+  Future<void> _saveAccount() async {
     if (!_formKey.currentState!.validate()) return;
-
     setState(() => _isLoading = true);
 
-    Future.delayed(const Duration(milliseconds: 300), () {
-      if (!mounted) return;
-      setState(() => _isLoading = false);
+    final state = AppStateScope.of(context);
+    final error = await state.updateProfile(
+      username: _usernameController.text.trim(),
+      password: _passwordController.text.isNotEmpty ? _passwordController.text : null,
+    );
+    if (!mounted) return;
+    setState(() => _isLoading = false);
 
-      final state = AppStateScope.of(context);
-      state.updateProfile(
-        username: _usernameController.text.trim(),
-        password: _passwordController.text.isNotEmpty ? _passwordController.text : null,
-      );
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Profil akun berhasil diperbarui'),
-          backgroundColor: AppColors.income,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        ),
-      );
-
-      Navigator.of(context).pop();
-    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(error ?? 'Profil akun berhasil diperbarui'),
+        backgroundColor: error == null ? AppColors.income : Colors.red,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    );
+    if (error == null) Navigator.of(context).pop();
   }
 
   @override
@@ -164,8 +159,8 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
                   prefixIcon: Icons.lock_outline,
                   isPassword: true,
                   validator: (val) {
-                    if (val != null && val.isNotEmpty && val.length < 6) {
-                      return 'Password minimal 6 karakter';
+                    if (val != null && val.isNotEmpty && val.length < 8) {
+                      return 'Password minimal 8 karakter';
                     }
                     return null;
                   },

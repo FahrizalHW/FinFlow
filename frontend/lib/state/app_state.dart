@@ -72,21 +72,18 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-    /// SEMENTARA: hanya mengubah data di aplikasi, belum dikirim ke backend.
-  /// Password belum dipakai di sini; nanti dikirim lewat endpoint backend.
-  void updateProfile({
-    String? username,
-    String? password,
-    String? profilePhoto,
-  }) {
-    if (_currentUser == null) return;
+  Future<String?> updateProfile({String? username, String? password}) async {
+    if (_currentUser == null) return null;
     final newName =
-        (username != null && username.trim().isNotEmpty) ? username.trim() : null;
-    _currentUser = _currentUser!.copyWith(
-      username: newName,
-      profilePhoto: profilePhoto,
-    );
-    notifyListeners();
+        (username != null && username.trim().isNotEmpty) ? username.trim() : _currentUser!.username;
+    try {
+      final user = await _auth.updateProfile(username: newName, password: password);
+      _currentUser = user.copyWith(profilePhoto: _currentUser!.profilePhoto);
+      notifyListeners();
+    } on ApiException catch (e) {
+      return e.message;
+    }
+    return null;
   }
 
   // ---------------- State tampilan ----------------
