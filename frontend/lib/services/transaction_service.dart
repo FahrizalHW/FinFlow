@@ -70,8 +70,7 @@ class TransactionService {
                 'nominal': amount,
                 'jenis_transaksi': type,
                 'id_kategori': categoryId,
-                'tanggal_transaksi':
-                    '${_dateOnly(date)} ${_two(date.hour)}:${_two(date.minute)}:00',
+                'tanggal_transaksi': _dateOnly(date),
                 'catatan': notes,
               },
             )
@@ -96,8 +95,7 @@ class TransactionService {
                 'nominal': amount,
                 'jenis_transaksi': type,
                 'id_kategori': categoryId,
-                'tanggal_transaksi':
-                    '${_dateOnly(date)} ${_two(date.hour)}:${_two(date.minute)}:00',
+                'tanggal_transaksi': _dateOnly(date),
                 'catatan': notes,
               },
             )
