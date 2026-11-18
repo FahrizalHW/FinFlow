@@ -68,7 +68,7 @@ class DeleteCategoryDialog extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             const Text(
-              'Peringatan: Transaksi yang menggunakan kategori ini akan ikut terhapus',
+              'Kategori yang masih dipakai transaksi tidak dapat dihapus. Ubah atau hapus transaksinya terlebih dahulu.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 13,
@@ -97,4 +97,3 @@ class DeleteCategoryDialog extends StatelessWidget {
     );
   }
 }
-

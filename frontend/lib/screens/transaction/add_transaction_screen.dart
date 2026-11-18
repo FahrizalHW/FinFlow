@@ -26,7 +26,6 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   final _notesController = TextEditingController();
 
   DateTime _selectedDate = DateTime.now();
-  TimeOfDay _selectedTime = TimeOfDay.now();
   CategoryModel? _selectedCategory;
   int? _pendingCategoryId; // kategori awal saat mode edit
 
@@ -44,7 +43,6 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
           : tx.amount.toString();
       _notesController.text = tx.notes ?? '';
       _selectedDate = tx.date;
-      _selectedTime = TimeOfDay.fromDateTime(tx.date);
       _pendingCategoryId = tx.categoryId;
     }
   }
@@ -81,31 +79,6 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
     }
   }
 
-  Future<void> _pickTime() async {
-    final picked = await showTimePicker(
-      context: context,
-      initialTime: _selectedTime,
-      builder: (context, child) {
-        return MediaQuery(
-          data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
-          child: Theme(
-            data: Theme.of(context).copyWith(
-              colorScheme: const ColorScheme.light(
-                primary: AppColors.primary,
-                onPrimary: Colors.white,
-                onSurface: AppColors.textPrimary,
-              ),
-            ),
-            child: child!,
-          ),
-        );
-      },
-    );
-    if (picked != null) {
-      setState(() => _selectedTime = picked);
-    }
-  }
-
   void _showMessage(String message, {bool isError = true}) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -138,8 +111,6 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       _selectedDate.year,
       _selectedDate.month,
       _selectedDate.day,
-      _selectedTime.hour,
-      _selectedTime.minute,
     );
 
     final state = AppStateScope.of(context);
@@ -348,7 +319,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Tanggal & Waktu Pickers (Side by side)
+                // Tanggal
                 Row(
                   children: [
                     // Tanggal
@@ -397,52 +368,6 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                         ],
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    // Waktu
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Waktu',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.textPrimary,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          InkWell(
-                            onTap: _pickTime,
-                            borderRadius: BorderRadius.circular(AppStyles.radiusMedium),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(AppStyles.radiusMedium),
-                                border: Border.all(color: AppColors.borderLight, width: 1.2),
-                              ),
-                              child: Row(
-                                children: [
-                                  const Icon(Icons.access_time_outlined, size: 16, color: AppColors.textSecondary),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      '${_selectedTime.hour.toString().padLeft(2, '0')}:${_selectedTime.minute.toString().padLeft(2, '0')}',
-                                      style: const TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w500,
-                                        color: AppColors.textPrimary,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -478,4 +403,3 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
     );
   }
 }
-

@@ -268,7 +268,7 @@ class AppState extends ChangeNotifier {
     return null;
   }
 
-  /// Aturan "hapus kategori = hapus semua transaksinya" ada di backend.
+  /// Backend menolak (409) jika kategori masih dipakai transaksi.
   Future<String?> deleteCategory(int categoryId) async {
     try {
       await _categoryService.delete(categoryId);

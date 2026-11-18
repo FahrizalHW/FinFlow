@@ -38,7 +38,8 @@ class AuthService {
       'password': ?password,
       'password_confirmation': ?password,
     }) as Map<String, dynamic>;
-    return UserModel.fromJson(res['data'] as Map<String, dynamic>);
+    final data = res['data'] as Map<String, dynamic>;
+    return UserModel.fromJson(data['user'] as Map<String, dynamic>);
   }
 
   Future<void> logout() async {

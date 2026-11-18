@@ -170,8 +170,6 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
           _divider(),
           _row('Tanggal', AppStyles.formatDate(tx.date)),
           _divider(),
-          _row('Waktu', AppStyles.formatTime(tx.date)),
-          _divider(),
           _row('Catatan', notes),
         ],
       ),

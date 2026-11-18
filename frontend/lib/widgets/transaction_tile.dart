@@ -109,7 +109,7 @@ class TransactionTile extends StatelessWidget {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            '${AppStyles.formatDate(transaction.date)}, ${AppStyles.formatTime(transaction.date)}',
+                            AppStyles.formatDate(transaction.date),
                             style: const TextStyle(
                               fontSize: 11,
                               color: AppColors.textMuted,
@@ -138,4 +138,3 @@ class TransactionTile extends StatelessWidget {
     );
   }
 }
-
