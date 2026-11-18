@@ -20,6 +20,31 @@ class AuthController extends Controller
             'password' => $validated['password'],
         ]);
 
+
+        $user->kategori()->createMany([
+            [
+                'nama_kategori' => 'Gaji',
+                'jenis_kategori' => 'pemasukan',
+            ],
+            [
+                'nama_kategori' => 'Bonus',
+                'jenis_kategori' => 'pemasukan',
+            ],
+            [
+                'nama_kategori' => 'Makanan',
+                'jenis_kategori' => 'pengeluaran',
+            ],
+            [
+                'nama_kategori' => 'Transport',
+                'jenis_kategori' => 'pengeluaran',
+            ],
+            [
+                'nama_kategori' => 'Belanja',
+                'jenis_kategori' => 'pengeluaran',
+            ],
+        ]);
+
+
         $token = $user->createToken('finflow-mobile')->plainTextToken;
 
         return response()->json([
@@ -31,6 +56,8 @@ class AuthController extends Controller
                 'token_type' => 'Bearer',
             ],
         ], 201);
+
+
     }
 
     public function login(Request $request)
