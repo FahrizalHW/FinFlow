@@ -15,7 +15,7 @@ class CategoryService {
   Future<CategoryModel> create({required String name, required String type}) async {
     final data = await _api.post('/kategori', body: {
       'nama_kategori': name,
-      'jenis': type,
+      'jenis_kategori': type,
     }) as Map<String, dynamic>;
     return CategoryModel.fromJson(data['data'] as Map<String, dynamic>);
   }

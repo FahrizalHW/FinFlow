@@ -18,7 +18,7 @@ class CategoryModel {
       id: json['id_kategori'] as int,
       userId: json['id_user'] as int?,
       name: json['nama_kategori'] as String,
-      type: json['jenis'] as String,
+      type: json['jenis_kategori'] as String,
     );
   }
 }

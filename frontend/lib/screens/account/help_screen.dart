@@ -1,11 +1,24 @@
 import 'package:flutter/material.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_styles.dart';
+import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class HelpScreen extends StatelessWidget {
   const HelpScreen({super.key});
 
-  void _showContactDialog(BuildContext context, String title, String detail, String actionLabel) {
+  static const String _supportEmail = 'support@finflow.com';
+  static const String _supportWaDisplay = '+62 895629478561';
+  // Format wa.me: kode negara + nomor, tanpa +, spasi, atau strip.
+  static const String _supportWaNumber = '62895629478561';
+
+  void _showContactDialog(
+    BuildContext context,
+    String title,
+    String detail,
+    String actionLabel,
+    Future<String> Function() onAction,
+  ) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -33,11 +46,13 @@ class HelpScreen extends StatelessWidget {
             child: const Text('Tutup', style: TextStyle(color: AppColors.textSecondary)),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.of(ctx).pop();
+              final message = await onAction();
+              if (!context.mounted) return;
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('$actionLabel berhasil disalin / dibuka'),
+                  content: Text(message),
                   backgroundColor: AppColors.primary,
                   behavior: SnackBarBehavior.floating,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -128,12 +143,16 @@ class HelpScreen extends StatelessWidget {
               _buildHelpActionButton(
                 icon: Icons.email_outlined,
                 title: 'Email',
-                subtitle: 'support@finflow.com',
+                subtitle: _supportEmail,
                 onTap: () => _showContactDialog(
                   context,
                   'Kirim Email',
-                  'Kirim laporan atau pertanyaan ke:\nsupport@finflow.com',
+                  'Kirim laporan atau pertanyaan ke:\n$_supportEmail',
                   'Salin Email',
+                  () async {
+                    await Clipboard.setData(const ClipboardData(text: _supportEmail));
+                    return 'Email berhasil disalin';
+                  },
                 ),
               ),
               const SizedBox(height: 16),
@@ -141,12 +160,23 @@ class HelpScreen extends StatelessWidget {
               _buildHelpActionButton(
                 icon: Icons.chat_outlined,
                 title: 'WhatsApp',
-                subtitle: '+62 812-3456-7890',
+                subtitle: _supportWaDisplay,
                 onTap: () => _showContactDialog(
                   context,
                   'Hubungi WhatsApp',
-                  'Chat langsung dengan tim dukungan:\n+62 812-3456-7890',
+                  'Chat langsung dengan tim dukungan:\n$_supportWaDisplay',
                   'Buka WhatsApp',
+                  () async {
+                    try {
+                      final ok = await launchUrl(
+                        Uri.parse('https://wa.me/$_supportWaNumber'),
+                        mode: LaunchMode.externalApplication,
+                      );
+                      return ok ? 'Membuka WhatsApp...' : 'Tidak bisa membuka WhatsApp';
+                    } catch (_) {
+                      return 'Tidak bisa membuka WhatsApp';
+                    }
+                  },
                 ),
               ),
             ],

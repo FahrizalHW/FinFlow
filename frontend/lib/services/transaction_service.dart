@@ -7,30 +7,52 @@ class TransactionService {
   TransactionService(this._api);
   final ApiClient _api;
 
-  Future<SummaryModel> fetchSummary() async {
-    final data = await _api.get('/ringkasan') as Map<String, dynamic>;
-    return SummaryModel.fromJson(data);
+  /// Mengambil semua transaksi milik user (sudah terurut terbaru di atas).
+  Future<List<TransactionModel>> _fetchAll() async {
+    final data = await _api.get('/transaksi') as Map<String, dynamic>;
+    return (data['data'] as List)
+        .map((e) => TransactionModel.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
+  Future<SummaryModel> fetchSummary() async {
+    final res = await _api.get('/ringkasan') as Map<String, dynamic>;
+    return SummaryModel.fromJson(res['data'] as Map<String, dynamic>);
+  }
+
+  // SEMENTARA: backend belum punya filter dan total_tampil di /transaksi, jadi
+  // filter dan total dihitung di sini. Kalau backend sudah menyediakannya,
+  // kirim parameter filter lewat `query` dan baca `total_tampil` dari respons.
   Future<HistoryResult> fetchHistory({
     String? type,
     String? categoryName,
     DateTime? startDate,
     DateTime? endDate,
   }) async {
-    final data =
-        await _api.get(
-              '/transaksi',
-              query: {
-                if (type != null) 'jenis': type,
-                if (categoryName != null) 'kategori': categoryName,
-                if (startDate != null) 'tanggal_mulai': _dateOnly(startDate),
-                if (endDate != null) 'tanggal_akhir': _dateOnly(endDate),
-              },
-            )
-            as Map<String, dynamic>;
-    return HistoryResult.fromJson(data);
+    final all = await _fetchAll();
+    final start = startDate == null ? null : _dateOnly(startDate);
+    final end = endDate == null ? null : _dateOnly(endDate);
+
+    final filtered = all.where((t) {
+      if (type != null && t.type != type) return false;
+      if (categoryName != null && t.categoryName != categoryName) return false;
+      final day = _dateOnly(t.date);
+      if (start != null && day.compareTo(start) < 0) return false;
+      if (end != null && day.compareTo(end) > 0) return false;
+      return true;
+    }).toList();
+
+    // Tab Semua: saldo total. Tab Pemasukan/Pengeluaran: jumlah yang lolos filter.
+    final total = type == null
+        ? _sum(all, 'pemasukan') - _sum(all, 'pengeluaran')
+        : _sum(filtered, type);
+
+    return HistoryResult(transactions: filtered, displayedTotal: total);
   }
+
+  double _sum(List<TransactionModel> list, String type) => list
+      .where((t) => t.type == type)
+      .fold<double>(0, (sum, t) => sum + t.amount);
 
   Future<TransactionModel> create({
     required String title,

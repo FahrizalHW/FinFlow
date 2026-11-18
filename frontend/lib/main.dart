@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'constants/app_colors.dart';
 import 'screens/splash_screen.dart';
 import 'state/app_state.dart';
-import 'dev/mock_client.dart';          
-import 'services/api_client.dart';  
+import 'services/api_client.dart'; 
 
 
 void main() {
@@ -24,7 +23,7 @@ class _FinFlowAppState extends State<FinFlowApp> {
   @override
   void initState() {
     super.initState();
-    _appState = AppState(apiClient: ApiClient(client: mockClient));
+    _appState = AppState(apiClient: ApiClient()); 
   }
 
   @override
