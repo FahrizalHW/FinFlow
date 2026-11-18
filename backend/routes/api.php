@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\KategoriController;
 use App\Http\Controllers\Api\TransaksiController;
 use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\ProfilController;
+use App\Http\Controllers\RingkasanController;
 
 Route::get('/health', function () {
     return response()->json([
@@ -24,6 +26,8 @@ Route::post('/login', [AuthController::class, 'login']);
 
 // Semua route di bawah ini memerlukan token Sanctum
 Route::middleware('auth:sanctum')->group(function () {
+    Route::put('/profil', [ProfilController::class, 'update']);
+
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
 
@@ -31,4 +35,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('transaksi', TransaksiController::class);
 
     Route::get('/dashboard', [DashboardController::class, 'index']);
+    Route::get('/ringkasan', [RingkasanController::class, 'index']);
 });
