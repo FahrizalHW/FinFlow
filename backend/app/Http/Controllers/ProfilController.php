@@ -8,27 +8,32 @@ use Illuminate\Validation\Rule;
 
 class ProfilController extends Controller
 {
+    
     public function update(Request $request)
     {
         $user = $request->user();
 
         $validated = $request->validate([
             'username' => [
-                'required',
+                'sometimes',
+                'nullable',
                 'string',
                 'max:255',
                 Rule::unique('users', 'username')
                     ->ignore($user->id_user, 'id_user'),
             ],
             'password' => [
+                'sometimes',
                 'nullable',
                 'string',
-                'min:6',
+                'min:8',
                 'confirmed',
             ],
         ]);
 
-        $user->username = $validated['username'];
+        if (!empty($validated['username'])) {
+            $user->username = $validated['username'];
+        }
 
         if (!empty($validated['password'])) {
             $user->password = Hash::make($validated['password']);
@@ -40,10 +45,13 @@ class ProfilController extends Controller
             'success' => true,
             'message' => 'Profil berhasil diperbarui.',
             'data' => [
-                'id_user' => $user->id_user,
-                'username' => $user->username,
-                'foto_profil' => $user->foto_profil,
+                'user' => [
+                    'id_user' => $user->id_user,
+                    'username' => $user->username,
+                    'foto_profil' => $user->foto_profil,
+                ],
             ],
         ]);
     }
+
 }
