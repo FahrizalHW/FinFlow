@@ -65,6 +65,17 @@ class KategoriController extends Controller
             'jenis_kategori' => 'sometimes|required|in:pemasukan,pengeluaran',
         ]);
 
+        if (
+            isset($validated['jenis_kategori'])
+            && $validated['jenis_kategori'] !== $kategori->jenis_kategori
+            && $kategori->transaksi()->exists()
+        ) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Jenis kategori tidak dapat diubah karena kategori sudah digunakan oleh transaksi.',
+            ], 409);
+        }
+
         $kategori->update($validated);
 
         return response()->json([
