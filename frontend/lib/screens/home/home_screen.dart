@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_styles.dart';
 import '../../state/app_state.dart';
+import '../../widgets/profile_avatar.dart';
 import '../../widgets/transaction_tile.dart';
 import '../history/transaction_detail_screen.dart';
 
@@ -53,19 +54,11 @@ class HomeScreen extends StatelessWidget {
                     onTap: () {
                       state.setNavIndex(2); // Navigate to Akun
                     },
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: AppColors.primaryLight,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.primary, width: 1.5),
-                      ),
-                      child: const Icon(
-                        Icons.person,
-                        color: AppColors.primary,
-                        size: 22,
-                      ),
+                    child: ProfileAvatar(
+                      photoPath: state.currentUser?.profilePhoto,
+                      size: 40,
+                      iconSize: 22,
+                      outlined: true,
                     ),
                   ),
                 ],

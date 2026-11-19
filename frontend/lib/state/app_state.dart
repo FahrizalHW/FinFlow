@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart' show ImageSource;
 import '../models/category_model.dart';
 import '../models/history_result.dart';
 import '../models/summary_model.dart';
@@ -7,6 +8,7 @@ import '../models/user_model.dart';
 import '../services/api_client.dart';
 import '../services/auth_service.dart';
 import '../services/category_service.dart';
+import '../services/profile_photo_service.dart';
 import '../services/transaction_service.dart';
 
 class AppState extends ChangeNotifier {
@@ -20,6 +22,7 @@ class AppState extends ChangeNotifier {
   late final AuthService _auth;
   late final CategoryService _categoryService;
   late final TransactionService _transactionService;
+  final ProfilePhotoService _photoService = ProfilePhotoService();
 
   // ---------------- Sesi ----------------
   UserModel? _currentUser;
@@ -33,6 +36,7 @@ class AppState extends ChangeNotifier {
     } on ApiException catch (e) {
       return e.message;
     }
+    await _loadLocalPhoto();
     _activeNavIndex = 0;
     _historyTab = 'Semua';
     _resetFilterValues();
@@ -84,6 +88,42 @@ class AppState extends ChangeNotifier {
       return e.message;
     }
     return null;
+  }
+
+  // ---------------- Foto profil (lokal) ----------------
+  /// Dipanggil setelah user diketahui (login / pulihkan sesi) untuk
+  /// memasang foto profil lokal ke currentUser.
+  Future<void> _loadLocalPhoto() async {
+    final user = _currentUser;
+    if (user == null) return;
+    final path = await _photoService.load(user.id);
+    if (path != null) {
+      _currentUser = user.copyWith(profilePhoto: path);
+    }
+  }
+
+  /// null = sukses atau dibatalkan, selain itu pesan error.
+  Future<String?> pickProfilePhoto(ImageSource source) async {
+    final user = _currentUser;
+    if (user == null) return null;
+    try {
+      final path = await _photoService.pickAndSave(user.id, source);
+      if (path == null) return null;
+      _currentUser = user.copyWith(profilePhoto: path);
+      notifyListeners();
+    } catch (_) {
+      return 'Gagal mengambil foto';
+    }
+    return null;
+  }
+
+  Future<void> removeProfilePhoto() async {
+    final user = _currentUser;
+    if (user == null) return;
+    await _photoService.remove(user.id);
+    // copyWith tidak bisa mengosongkan foto, jadi bangun ulang modelnya.
+    _currentUser = UserModel(id: user.id, username: user.username);
+    notifyListeners();
   }
 
   // ---------------- State tampilan ----------------
