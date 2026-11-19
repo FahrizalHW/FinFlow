@@ -161,7 +161,7 @@ class HomeScreen extends StatelessWidget {
                             const SizedBox(height: 8),
                             Text(
                               AppStyles.formatRupiah(
-                                state.totalMonthlyIncome,
+                                state.totalIncome,
                                 showSign: true,
                                 isIncome: true,
                               ),
@@ -219,7 +219,7 @@ class HomeScreen extends StatelessWidget {
                             const SizedBox(height: 8),
                             Text(
                               AppStyles.formatRupiah(
-                                state.totalMonthlyExpense,
+                                state.totalExpense,
                                 showSign: true,
                                 isIncome: false,
                               ),

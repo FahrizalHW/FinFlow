@@ -38,16 +38,16 @@ void main() {
     });
   });
 
-  test('SummaryModel.fromJson membaca saldo dan transaksi terbaru', () {
+  test('SummaryModel.fromJson membaca saldo, total, dan transaksi terbaru', () {
     final s = SummaryModel.fromJson({
       'saldo': 1950000,
-      'pemasukan_bulan_ini': 2000000,
-      'pengeluaran_bulan_ini': 50000,
+      'total_pemasukan': 2000000,
+      'total_pengeluaran': 50000,
       'transaksi_terbaru': [],
     });
     expect(s.balance, 1950000);
-    expect(s.monthlyIncome, 2000000);
-    expect(s.monthlyExpense, 50000);
+    expect(s.totalIncome, 2000000);
+    expect(s.totalExpense, 50000);
     expect(s.recentTransactions, isEmpty);
   });
 
