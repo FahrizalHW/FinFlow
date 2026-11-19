@@ -3,6 +3,7 @@ import '../../constants/app_colors.dart';
 import '../../state/app_state.dart';
 import '../../widgets/confirm_dialog.dart';
 import '../../widgets/custom_button.dart';
+import '../../widgets/profile_avatar.dart';
 import '../auth/login_screen.dart';
 import 'about_screen.dart';
 import 'edit_account_screen.dart';
@@ -57,26 +58,11 @@ class AccountScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Avatar circle (Matches Gambar L5.16)
-              Container(
-                width: 100,
-                height: 100,
-                decoration: BoxDecoration(
-                  color: AppColors.primary,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primary.withAlpha(50),
-                      blurRadius: 16,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
-                ),
-                child: const Icon(
-                  Icons.person,
-                  size: 64,
-                  color: Colors.white,
-                ),
+              // Avatar (foto profil lokal jika ada)
+              ProfileAvatar(
+                photoPath: user?.profilePhoto,
+                size: 100,
+                iconSize: 64,
               ),
               const SizedBox(height: 16),
 

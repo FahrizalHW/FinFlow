@@ -1,8 +1,11 @@
+import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../constants/app_colors.dart';
 import '../../state/app_state.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
+import '../../widgets/profile_avatar.dart';
 
 class EditAccountScreen extends StatefulWidget {
   const EditAccountScreen({super.key});
@@ -36,6 +39,72 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
+  }
+
+  // Kamera hanya ada di HP; di desktop hanya galeri/file.
+  bool get _cameraSupported =>
+      !kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.android ||
+          defaultTargetPlatform == TargetPlatform.iOS);
+
+  Future<void> _choosePhoto() async {
+    // Foto disimpan sebagai file lokal, jadi tidak didukung di Flutter Web.
+    if (kIsWeb) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Foto profil hanya tersedia di aplikasi Android, iOS, atau desktop'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+    final state = AppStateScope.of(context);
+    final hasPhoto = state.currentUser?.profilePhoto != null;
+
+    // Hasil bottom sheet: ImageSource, atau 'remove' = hapus foto.
+    final action = await showModalBottomSheet<Object>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Wrap(
+          children: [
+            if (_cameraSupported)
+              ListTile(
+                leading: const Icon(Icons.photo_camera),
+                title: const Text('Ambil dari kamera'),
+                onTap: () => Navigator.pop(ctx, ImageSource.camera),
+              ),
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Pilih dari galeri'),
+              onTap: () => Navigator.pop(ctx, ImageSource.gallery),
+            ),
+            if (hasPhoto)
+              ListTile(
+                leading: const Icon(Icons.delete_outline, color: Colors.red),
+                title: const Text('Hapus foto', style: TextStyle(color: Colors.red)),
+                onTap: () => Navigator.pop(ctx, 'remove'),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (action == null || !mounted) return;
+
+    String? error;
+    if (action == 'remove') {
+      await state.removeProfilePhoto();
+    } else if (action is ImageSource) {
+      error = await state.pickProfilePhoto(action);
+    }
+    if (!mounted || error == null) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(error),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    );
   }
 
   Future<void> _saveAccount() async {
@@ -89,49 +158,37 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Avatar with Camera Badge (Matches Gambar L5.17)
+                // Avatar + ikon kamera (ketuk untuk ganti foto profil)
                 Center(
-                  child: Stack(
-                    children: [
-                      Container(
-                        width: 96,
-                        height: 96,
-                        decoration: BoxDecoration(
-                          color: AppColors.primary,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.primary.withAlpha(50),
-                              blurRadius: 12,
-                              offset: const Offset(0, 4),
+                  child: GestureDetector(
+                    onTap: _choosePhoto,
+                    child: Stack(
+                      children: [
+                        ProfileAvatar(
+                          photoPath: AppStateScope.of(context).currentUser?.profilePhoto,
+                          size: 96,
+                          iconSize: 60,
+                        ),
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: AppColors.primary, width: 2),
                             ),
-                          ],
-                        ),
-                        child: const Icon(
-                          Icons.person,
-                          size: 60,
-                          color: Colors.white,
-                        ),
-                      ),
-                      Positioned(
-                        bottom: 0,
-                        right: 0,
-                        child: Container(
-                          width: 32,
-                          height: 32,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: AppColors.primary, width: 2),
-                          ),
-                          child: const Icon(
-                            Icons.camera_alt,
-                            size: 16,
-                            color: AppColors.primary,
+                            child: const Icon(
+                              Icons.camera_alt,
+                              size: 16,
+                              color: AppColors.primary,
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
                 const SizedBox(height: 32),
