@@ -4,4 +4,8 @@
          to allow setting breakpoints, to provide hot reload, etc.
     -->
     <uses-permission android:name="android.permission.INTERNET"/>
+
+    <!-- Hanya untuk development: backend lokal memakai http://, bukan https://.
+         Build rilis (main manifest) TIDAK mengizinkan HTTP polos. -->
+    <application android:usesCleartextTraffic="true" />
 </manifest>
