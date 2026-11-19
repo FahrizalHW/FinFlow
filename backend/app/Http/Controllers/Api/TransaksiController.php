@@ -1,37 +1,16 @@
 <?php
+
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Kategori;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 class TransaksiController extends Controller
 {
-    private function rules(Request $request, bool $partial = false): array
-    {
-        $required = $partial ? 'sometimes|required|' : 'required|';
-
-        return [
-            'id_kategori' => [
-                $partial ? 'sometimes' : 'required',
-                'required_if:jenis_transaksi,',
-                'integer',
-                Rule::exists('kategori', 'id_kategori')
-                    ->where(fn ($query) => $query->where(
-                        'id_user',
-                        $request->user()->id_user
-                    )),
-            ],
-            'nama_transaksi' => $required . 'string|max:255',
-            'jenis_transaksi' => $required . 'in:pemasukan,pengeluaran',
-            'tanggal_transaksi' => $required . 'date',
-            'nominal' => $required . 'numeric|min:0.01',
-            'catatan' => 'sometimes|nullable|string',
-        ];
-    }
-
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
         $transaksi = $request->user()
             ->transaksi()
@@ -47,23 +26,20 @@ class TransaksiController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'id_kategori' => [
                 'required',
                 'integer',
                 Rule::exists('kategori', 'id_kategori')
-                    ->where(fn ($query) => $query->where(
-                        'id_user',
-                        $request->user()->id_user
-                    )),
+                    ->where(fn ($query) => $query->where('id_user', $request->user()->id_user)),
             ],
-            'nama_transaksi' => 'required|string|max:255',
-            'jenis_transaksi' => 'required|in:pemasukan,pengeluaran',
-            'tanggal_transaksi' => 'required|date',
-            'nominal' => 'required|numeric|min:0.01',
-            'catatan' => 'nullable|string',
+            'nama_transaksi' => ['required', 'string', 'max:255'],
+            'jenis_transaksi' => ['required', 'in:pemasukan,pengeluaran'],
+            'tanggal_transaksi' => ['required', 'date'],
+            'nominal' => ['required', 'numeric', 'gt:0'],
+            'catatan' => ['nullable', 'string'],
         ]);
 
         $kategori = Kategori::where('id_user', $request->user()->id_user)
@@ -76,11 +52,8 @@ class TransaksiController extends Controller
             ], 422);
         }
 
-        // id_user selalu berasal dari pengguna yang terautentikasi.
-        $transaksi = $request->user()
-            ->transaksi()
-            ->create($validated);
-
+        // id_user berasal dari token login, bukan dari input pengguna.
+        $transaksi = $request->user()->transaksi()->create($validated);
         $transaksi->load('kategori');
 
         return response()->json([
@@ -90,7 +63,7 @@ class TransaksiController extends Controller
         ], 201);
     }
 
-    public function show(Request $request, $id)
+    public function show(Request $request, string $id): JsonResponse
     {
         $transaksi = $request->user()
             ->transaksi()
@@ -104,7 +77,7 @@ class TransaksiController extends Controller
         ]);
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, string $id): JsonResponse
     {
         $transaksi = $request->user()
             ->transaksi()
@@ -116,21 +89,17 @@ class TransaksiController extends Controller
                 'required',
                 'integer',
                 Rule::exists('kategori', 'id_kategori')
-                    ->where(fn ($query) => $query->where(
-                        'id_user',
-                        $request->user()->id_user
-                    )),
+                    ->where(fn ($query) => $query->where('id_user', $request->user()->id_user)),
             ],
-            'nama_transaksi' => 'sometimes|required|string|max:255',
-            'jenis_transaksi' => 'sometimes|required|in:pemasukan,pengeluaran',
-            'tanggal_transaksi' => 'sometimes|required|date',
-            'nominal' => 'sometimes|required|numeric|min:0.01',
-            'catatan' => 'sometimes|nullable|string',
+            'nama_transaksi' => ['sometimes', 'required', 'string', 'max:255'],
+            'jenis_transaksi' => ['sometimes', 'required', 'in:pemasukan,pengeluaran'],
+            'tanggal_transaksi' => ['sometimes', 'required', 'date'],
+            'nominal' => ['sometimes', 'required', 'numeric', 'gt:0'],
+            'catatan' => ['sometimes', 'nullable', 'string'],
         ]);
 
         $kategoriId = $validated['id_kategori'] ?? $transaksi->id_kategori;
-        $jenisTransaksi = $validated['jenis_transaksi']
-            ?? $transaksi->jenis_transaksi;
+        $jenisTransaksi = $validated['jenis_transaksi'] ?? $transaksi->jenis_transaksi;
 
         $kategori = Kategori::where('id_user', $request->user()->id_user)
             ->findOrFail($kategoriId);
@@ -152,7 +121,7 @@ class TransaksiController extends Controller
         ]);
     }
 
-    public function destroy(Request $request, $id)
+    public function destroy(Request $request, string $id): JsonResponse
     {
         $transaksi = $request->user()
             ->transaksi()

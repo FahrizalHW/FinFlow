@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use App\Models\Transaksi;
@@ -16,11 +17,12 @@ class RingkasanController extends Controller
             $user->id_user
         );
 
-        // Total pemasukan dan pengeluaran sepanjang waktu.
+        // Total pemasukan sepanjang waktu.
         $totalPemasukan = (clone $semuaTransaksi)
             ->where('jenis_transaksi', 'pemasukan')
             ->sum('nominal');
 
+        // Total pengeluaran sepanjang waktu.
         $totalPengeluaran = (clone $semuaTransaksi)
             ->where('jenis_transaksi', 'pengeluaran')
             ->sum('nominal');
@@ -47,7 +49,7 @@ class RingkasanController extends Controller
             ])
             ->sum('nominal');
 
-        // Lima transaksi terbaru milik user.
+        // Lima transaksi terbaru.
         $transaksiTerbaru = (clone $semuaTransaksi)
             ->with('kategori')
             ->orderByDesc('tanggal_transaksi')
@@ -56,14 +58,24 @@ class RingkasanController extends Controller
             ->get();
 
         return response()->json([
-        'success' => true,
-        'message' => 'Ringkasan berhasil diambil.',
-        'data' => [
-            'saldo' => (float) $totalPemasukan - (float) $totalPengeluaran,
-            'total_pemasukan' => (float) $totalPemasukan,
-            'total_pengeluaran' => (float) $totalPengeluaran,
-            'transaksi_terbaru' => $transaksiTerbaru,
-        ],
-    ]);
-}
+            'success' => true,
+            'message' => 'Ringkasan berhasil diambil.',
+            'data' => [
+                // Saldo sepanjang waktu.
+                'saldo' => (float) $totalPemasukan
+                    - (float) $totalPengeluaran,
+
+                // Total sepanjang waktu.
+                'total_pemasukan' => (float) $totalPemasukan,
+                'total_pengeluaran' => (float) $totalPengeluaran,
+
+                // Total bulan berjalan.
+                'pemasukan_bulan_ini' => (float) $pemasukanBulanIni,
+                'pengeluaran_bulan_ini' => (float) $pengeluaranBulanIni,
+
+                // Lima transaksi terbaru.
+                'transaksi_terbaru' => $transaksiTerbaru,
+            ],
+        ]);
+    }
 }
