@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -25,6 +26,11 @@ class User extends Authenticatable
         'password',
     ];
 
+    // Menambahkan URL foto pada respons JSON user
+    protected $appends = [
+        'foto_profil_url',
+    ];
+
     protected function casts(): array
     {
         return [
@@ -32,15 +38,31 @@ class User extends Authenticatable
         ];
     }
 
+    // Menghasilkan URL foto profil
+    public function getFotoProfilUrlAttribute()
+    {
+        return $this->foto_profil
+            ? url('storage/' . $this->foto_profil)
+            : null;
+    }
+
     // Relasi ke kategori
     public function kategori(): HasMany
     {
-        return $this->hasMany(Kategori::class, 'id_user', 'id_user');
+        return $this->hasMany(
+            Kategori::class,
+            'id_user',
+            'id_user'
+        );
     }
 
     // Relasi ke transaksi
     public function transaksi(): HasMany
     {
-        return $this->hasMany(Transaksi::class, 'id_user', 'id_user');
+        return $this->hasMany(
+            Transaksi::class,
+            'id_user',
+            'id_user'
+        );
     }
 }
