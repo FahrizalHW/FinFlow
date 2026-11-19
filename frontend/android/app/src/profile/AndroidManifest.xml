@@ -4,4 +4,7 @@
          to allow setting breakpoints, to provide hot reload, etc.
     -->
     <uses-permission android:name="android.permission.INTERNET"/>
+
+    <!-- Hanya untuk development/profiling: boleh HTTP polos ke backend lokal. -->
+    <application android:usesCleartextTraffic="true" />
 </manifest>
