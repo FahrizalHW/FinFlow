@@ -3,41 +3,54 @@
 namespace App\Http\Controllers;
 
 use App\Models\Transaksi;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class RingkasanController extends Controller
 {
-    public function index(Request $request): JsonResponse
+    public function index(Request $request)
     {
-        $transaksiUser = Transaksi::query()
-            ->where('id_user', $request->user()->id_user);
+        $user = $request->user();
 
-        // Angka total dipakai SummaryModel Flutter untuk kartu ringkasan.
-        $totalPemasukan = (clone $transaksiUser)
+        // Semua transaksi milik user yang sedang login.
+        $semuaTransaksi = Transaksi::where(
+            'id_user',
+            $user->id_user
+        );
+
+        // Total pemasukan sepanjang waktu.
+        $totalPemasukan = (clone $semuaTransaksi)
             ->where('jenis_transaksi', 'pemasukan')
             ->sum('nominal');
 
-        $totalPengeluaran = (clone $transaksiUser)
+        // Total pengeluaran sepanjang waktu.
+        $totalPengeluaran = (clone $semuaTransaksi)
             ->where('jenis_transaksi', 'pengeluaran')
             ->sum('nominal');
 
-        // Tetap sediakan angka bulan berjalan agar endpoint kompatibel
-        // dengan pemanggil API versi sebelumnya.
+        // Awal dan akhir bulan berjalan.
         $awalBulan = now()->startOfMonth()->toDateString();
         $akhirBulan = now()->endOfMonth()->toDateString();
 
-        $pemasukanBulanIni = (clone $transaksiUser)
+        // Pemasukan bulan ini.
+        $pemasukanBulanIni = (clone $semuaTransaksi)
             ->where('jenis_transaksi', 'pemasukan')
-            ->whereBetween('tanggal_transaksi', [$awalBulan, $akhirBulan])
+            ->whereBetween('tanggal_transaksi', [
+                $awalBulan,
+                $akhirBulan,
+            ])
             ->sum('nominal');
 
-        $pengeluaranBulanIni = (clone $transaksiUser)
+        // Pengeluaran bulan ini.
+        $pengeluaranBulanIni = (clone $semuaTransaksi)
             ->where('jenis_transaksi', 'pengeluaran')
-            ->whereBetween('tanggal_transaksi', [$awalBulan, $akhirBulan])
+            ->whereBetween('tanggal_transaksi', [
+                $awalBulan,
+                $akhirBulan,
+            ])
             ->sum('nominal');
 
-        $transaksiTerbaru = (clone $transaksiUser)
+        // Lima transaksi terbaru.
+        $transaksiTerbaru = (clone $semuaTransaksi)
             ->with('kategori')
             ->orderByDesc('tanggal_transaksi')
             ->orderByDesc('id_transaksi')
@@ -48,11 +61,19 @@ class RingkasanController extends Controller
             'success' => true,
             'message' => 'Ringkasan berhasil diambil.',
             'data' => [
-                'saldo' => (float) $totalPemasukan - (float) $totalPengeluaran,
+                // Saldo sepanjang waktu.
+                'saldo' => (float) $totalPemasukan
+                    - (float) $totalPengeluaran,
+
+                // Total sepanjang waktu.
                 'total_pemasukan' => (float) $totalPemasukan,
                 'total_pengeluaran' => (float) $totalPengeluaran,
+
+                // Total bulan berjalan.
                 'pemasukan_bulan_ini' => (float) $pemasukanBulanIni,
                 'pengeluaran_bulan_ini' => (float) $pengeluaranBulanIni,
+
+                // Lima transaksi terbaru.
                 'transaksi_terbaru' => $transaksiTerbaru,
             ],
         ]);
