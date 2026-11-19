@@ -29,6 +29,14 @@ class AuthService {
     });
   }
 
+  /// Mengambil data user dari token yang tersimpan (dipakai untuk
+  /// memulihkan sesi). Melempar ApiException(401) jika token tidak berlaku.
+  Future<UserModel> me() async {
+    final res = await _api.get('/me') as Map<String, dynamic>;
+    final data = res['data'] as Map<String, dynamic>;
+    return UserModel.fromJson(data['user'] as Map<String, dynamic>);
+  }
+
   Future<UserModel> updateProfile({
     required String username,
     String? password,

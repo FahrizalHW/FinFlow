@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'constants/app_colors.dart';
+import 'screens/auth/login_screen.dart';
 import 'screens/splash_screen.dart';
 import 'state/app_state.dart';
-import 'services/api_client.dart'; 
-
+import 'services/api_client.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,11 +19,23 @@ class FinFlowApp extends StatefulWidget {
 
 class _FinFlowAppState extends State<FinFlowApp> {
   late final AppState _appState;
+  final _navigatorKey = GlobalKey<NavigatorState>();
+  final _messengerKey = GlobalKey<ScaffoldMessengerState>();
 
   @override
   void initState() {
     super.initState();
-    _appState = AppState(apiClient: ApiClient()); 
+    _appState = AppState(apiClient: ApiClient());
+    // Token ditolak server -> kembali ke Login dengan pesan.
+    _appState.onSessionExpired = () {
+      _navigatorKey.currentState?.pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+        (route) => false,
+      );
+      _messengerKey.currentState?.showSnackBar(
+        const SnackBar(content: Text('Sesi berakhir, silakan login kembali')),
+      );
+    };
   }
 
   @override
@@ -37,6 +49,8 @@ class _FinFlowAppState extends State<FinFlowApp> {
     return AppStateScope(
       appState: _appState,
       child: MaterialApp(
+        navigatorKey: _navigatorKey,
+        scaffoldMessengerKey: _messengerKey,
         title: 'FinFlow',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
