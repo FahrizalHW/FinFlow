@@ -29,7 +29,18 @@ Project ini dikembangkan secara kolaboratif agar setiap anggota tim dapat menger
 - Melihat riwayat transaksi.
 - Memisahkan frontend dan backend agar mudah dikembangkan dan dipelihara.
 
-> Fitur-fitur di atas merupakan rencana pengembangan dan belum tentu seluruhnya sudah diimplementasikan.
+## ✅ Fitur yang Sudah Diimplementasikan
+
+- Register, login, logout, dan pemulihan sesi saat aplikasi dibuka ulang.
+- CRUD transaksi dan pengelolaan kategori (daftar, tambah, hapus).
+- Beranda dengan saldo dan ringkasan total seluruh transaksi, serta 5 transaksi terbaru.
+- Riwayat dengan tab Semua/Pengeluaran, filter kategori, dan filter tanggal.
+- Ubah profil dan foto profil dari kamera atau galeri (disimpan lokal per pengguna).
+- Loading, empty, dan error state dengan tombol "Coba lagi" serta pull-to-refresh.
+- Keamanan: token di `flutter_secure_storage`, HTTP polos hanya di build debug/profile, `allowBackup` dimatikan.
+- 17 unit test (`frontend/test/`).
+
+Kontrak API, checklist acceptance criteria, dan bukti pengujian ada di [`docs/EVIDENCE_PHASE3.md`](docs/EVIDENCE_PHASE3.md).
 
 ## 🛠️ Tech Stack
 
@@ -130,15 +141,27 @@ Make sure an Android emulator or a connected Android device is available.
 
 ### 4. API Connection
 
-The Flutter application will communicate with Laravel through HTTP requests and JSON responses.
+Alamat API diatur di satu tempat (`frontend/lib/config/api_config.dart`) dan diganti saat menjalankan aplikasi:
 
-For local development, the API address depends on the device:
+```bash
+flutter run --dart-define=API_BASE_URL=http://<IP-LAN>:8000/api
+```
 
-- **Web or desktop on the same computer:** `http://127.0.0.1:8000`
-- **Android Emulator:** `http://10.0.2.2:8000`
-- **Physical Android device:** use your computer's local IP address, with both devices connected to the same network.
+| Perangkat | `API_BASE_URL` |
+|---|---|
+| Android Emulator (bawaan) | `http://10.0.2.2:8000/api` |
+| Web atau desktop di komputer yang sama | `http://127.0.0.1:8000/api` |
+| HP fisik | `http://<IP-LAN-komputer>:8000/api` (satu jaringan Wi-Fi) |
 
-The API base URL should be configured in the frontend rather than scattered throughout the application.
+Jalankan backend dengan `php artisan serve --host=0.0.0.0` agar bisa diakses dari perangkat lain.
+Gunakan build **debug** untuk HTTP lokal. Build rilis menolak HTTP polos dan membutuhkan HTTPS.
+
+### 5. Menjalankan Tes
+
+```bash
+cd frontend
+flutter test
+```
 
 ## 🌿 Git Workflow
 
@@ -198,12 +221,15 @@ Examples: `feature/transaction-ui`, `feature/transaction-api`, `fix/login-valida
 - [x] Initialize Flutter project
 - [x] Initialize Laravel project
 - [x] Create repository structure
-- [ ] Define database schema
-- [ ] Define REST API contract
-- [ ] Develop frontend UI
-- [ ] Implement backend endpoints
-- [ ] Integrate Flutter with Laravel API
-- [ ] Test application functionality
+- [x] Define database schema
+- [x] Define REST API contract ([lihat dokumen evidence](docs/EVIDENCE_PHASE3.md))
+- [x] Develop frontend UI
+- [x] Implement backend endpoints
+- [x] Integrate Flutter with Laravel API
+- [x] Unit test frontend (17 test)
+- [ ] Verifikasi end-to-end ke backend asli (bukti di `docs/bukti/`)
+- [ ] Cache data lokal untuk mode offline
+- [ ] HTTPS untuk lingkungan produksi
 
 ## 📄 License
 
