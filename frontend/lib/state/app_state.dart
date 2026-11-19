@@ -259,8 +259,8 @@ class AppState extends ChangeNotifier {
   bool get isLoading => _loadingCount > 0;
 
   double get totalBalance => _summary?.balance ?? 0;
-  double get totalMonthlyIncome => _summary?.monthlyIncome ?? 0;
-  double get totalMonthlyExpense => _summary?.monthlyExpense ?? 0;
+  double get totalIncome => _summary?.totalIncome ?? 0;
+  double get totalExpense => _summary?.totalExpense ?? 0;
   List<TransactionModel> get recentTransactions =>
       _summary?.recentTransactions ?? const [];
 
