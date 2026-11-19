@@ -251,8 +251,12 @@ class AppState extends ChangeNotifier {
   double _historyTotal = 0;
   List<CategoryModel> _categories = [];
   String? _loadError;
+  int _loadingCount = 0; // jumlah pemuatan yang sedang berjalan
 
   String? get loadError => _loadError;
+
+  /// true selama data sedang dimuat dari server.
+  bool get isLoading => _loadingCount > 0;
 
   double get totalBalance => _summary?.balance ?? 0;
   double get totalMonthlyIncome => _summary?.monthlyIncome ?? 0;
@@ -268,8 +272,9 @@ class AppState extends ChangeNotifier {
 
   List<CategoryModel> get categories => List.unmodifiable(_categories);
 
-  /// Muat ulang kategori, ringkasan Beranda, dan riwayat.
   Future<void> refreshAll() async {
+    _loadingCount++;
+    notifyListeners();
     try {
       final results = await Future.wait([
         _categoryService.fetchAll(),
@@ -290,11 +295,17 @@ class AppState extends ChangeNotifier {
       _loadError = null;
     } on ApiException catch (e) {
       if (isAuthenticated) _loadError = e.message;
+    } catch (_) {
+      if (isAuthenticated) _loadError = 'Data dari server tidak dapat dibaca.';
+    } finally {
+      _loadingCount--;
     }
     notifyListeners();
   }
 
   Future<void> loadHistory() async {
+    _loadingCount++;
+    notifyListeners();
     try {
       final history = await _transactionService.fetchHistory(
         type: _historyTypeParam(),
@@ -307,6 +318,10 @@ class AppState extends ChangeNotifier {
       _loadError = null;
     } on ApiException catch (e) {
       if (isAuthenticated) _loadError = e.message;
+    } catch (_) {
+      if (isAuthenticated) _loadError = 'Data dari server tidak dapat dibaca.';
+    } finally {
+      _loadingCount--;
     }
     notifyListeners();
   }
