@@ -30,9 +30,9 @@ class RingkasanController extends Controller
         'success' => true,
         'message' => 'Ringkasan berhasil diambil.',
         'data' => [
-            'saldo' => (float) $pemasukan - (float) $pengeluaran,
-            'total_pemasukan' => (float) $pemasukan,
-            'total_pengeluaran' => (float) $pengeluaran,
+            'saldo' => (float) $totalPemasukan - (float) $totalPengeluaran,
+            'total_pemasukan' => (float) $totalPemasukan,
+            'total_pengeluaran' => (float) $totalPengeluaran,
             'transaksi_terbaru' => $transaksiTerbaru,
         ],
     ]);
