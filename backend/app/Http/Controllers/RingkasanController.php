@@ -59,14 +59,9 @@ class RingkasanController extends Controller
             'success' => true,
             'message' => 'Ringkasan berhasil diambil.',
             'data' => [
-                // Saldo merupakan total sepanjang waktu.
-                'saldo' => (float) $totalPemasukan
-                    - (float) $totalPengeluaran,
-
-                // Nama key disesuaikan dengan SummaryModel Flutter.
-                'pemasukan_bulan_ini' => (float) $pemasukanBulanIni,
-                'pengeluaran_bulan_ini' => (float) $pengeluaranBulanIni,
-
+                'saldo' => (float) $totalPemasukan - (float) $totalPengeluaran,
+                'total_pemasukan' => (float) $totalPemasukan,
+                'total_pengeluaran' => (float) $totalPengeluaran,
                 'transaksi_terbaru' => $transaksiTerbaru,
             ],
         ]);
