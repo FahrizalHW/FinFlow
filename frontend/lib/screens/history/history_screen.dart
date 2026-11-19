@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_styles.dart';
 import '../../state/app_state.dart';
+import '../../widgets/load_error_banner.dart';
 import '../../widgets/transaction_tile.dart';
 import 'filter_bottom_sheet.dart';
 import 'transaction_detail_screen.dart';
@@ -225,49 +226,82 @@ class HistoryScreen extends StatelessWidget {
                 ),
               ),
 
+            // Error pemuatan data + tombol coba lagi
+            if (state.loadError != null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                child: LoadErrorBanner(
+                  message: state.loadError!,
+                  onRetry: state.refreshAll,
+                ),
+              ),
+
+            // Garis loading tipis saat memuat ulang data yang sudah ada
+            if (state.isLoading && transactions.isNotEmpty)
+              const Padding(
+                padding: EdgeInsets.only(top: 8),
+                child: LinearProgressIndicator(minHeight: 2),
+              ),
+
             const SizedBox(height: 8),
 
-            // Transaction List
+            // Transaction List (tarik ke bawah untuk memuat ulang)
             Expanded(
-              child: transactions.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
+              child: RefreshIndicator(
+                onRefresh: state.refreshAll,
+                child: transactions.isEmpty
+                    ? ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
                         children: [
-                          Icon(
-                            Icons.receipt_long_outlined,
-                            size: 54,
-                            color: AppColors.textMuted.withAlpha(120),
-                          ),
-                          const SizedBox(height: 12),
-                          const Text(
-                            'Tidak ada transaksi yang sesuai',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.textSecondary,
+                          SizedBox(
+                            height: 280,
+                            child: Center(
+                              child: state.isLoading
+                                  ? const CircularProgressIndicator()
+                                  : state.loadError != null
+                                      ? const SizedBox.shrink()
+                                      : Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              Icons.receipt_long_outlined,
+                                              size: 54,
+                                              color: AppColors.textMuted.withAlpha(120),
+                                            ),
+                                            const SizedBox(height: 12),
+                                            const Text(
+                                              'Tidak ada transaksi yang sesuai',
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w500,
+                                                color: AppColors.textSecondary,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                             ),
                           ),
                         ],
+                      )
+                    : ListView.builder(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        itemCount: transactions.length,
+                        itemBuilder: (context, index) {
+                          final tx = transactions[index];
+                          return TransactionTile(
+                            transaction: tx,
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => TransactionDetailScreen(transactionId: tx.id),
+                                ),
+                              );
+                            },
+                          );
+                        },
                       ),
-                    )
-                  : ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      itemCount: transactions.length,
-                      itemBuilder: (context, index) {
-                        final tx = transactions[index];
-                        return TransactionTile(
-                          transaction: tx,
-                          onTap: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => TransactionDetailScreen(transactionId: tx.id),
-                              ),
-                            );
-                          },
-                        );
-                      },
-                    ),
+              ),
             ),
           ],
         ),
@@ -309,4 +343,3 @@ class HistoryScreen extends StatelessWidget {
     );
   }
 }
-
