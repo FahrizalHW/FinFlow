@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_styles.dart';
+import '../state/app_state.dart';
 import 'auth/login_screen.dart';
+import 'main_navigation_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -29,20 +31,37 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
     _controller.forward();
 
-    // After animation and brief pause, navigate to Login Screen
-    Future.delayed(const Duration(milliseconds: 2200), () {
-      if (mounted) {
-        Navigator.of(context).pushReplacement(
-          PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) => const LoginScreen(),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) {
-              return FadeTransition(opacity: animation, child: child);
-            },
-            transitionDuration: const Duration(milliseconds: 400),
-          ),
-        );
-      }
-    });
+    // Setelah frame pertama (AppStateScope baru boleh dibaca di sini):
+    // cek sesi tersimpan sambil menampilkan splash.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _start());
+  }
+
+    Future<void> _start() async {
+    final state = AppStateScope.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final restoring = state.restoreSession();
+    await Future.delayed(const Duration(milliseconds: 2200));
+    final restored = await restoring.catchError((_) => false);
+    if (!mounted) return;
+
+    Navigator.of(context).pushReplacement(
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            restored ? const MainNavigationScreen() : const LoginScreen(),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+        transitionDuration: const Duration(milliseconds: 400),
+      ),
+    );
+
+    // Token tersimpan ditolak server -> beri tahu user kenapa ke Login.
+    if (state.sessionExpiredOnRestore) {
+      state.sessionExpiredOnRestore = false;
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Sesi berakhir, silakan login kembali')),
+      );
+    }
   }
 
   @override
@@ -90,4 +109,3 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     );
   }
 }
-

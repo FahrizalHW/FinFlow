@@ -16,6 +16,8 @@ class AppState extends ChangeNotifier {
     _auth = AuthService(_api);
     _categoryService = CategoryService(_api);
     _transactionService = TransactionService(_api);
+    // Server menjawab 401 saat token kedaluwarsa/dicabut -> logout otomatis.
+    _api.onUnauthorized = _handleUnauthorized;
   }
 
   final ApiClient _api;
@@ -63,7 +65,17 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> logout() async {
-    await _auth.logout();
+    _loggingOut = true;
+    try {
+      await _auth.logout();
+    } finally {
+      _loggingOut = false;
+    }
+    _clearSessionData();
+    notifyListeners();
+  }
+
+  void _clearSessionData() {
     _currentUser = null;
     _summary = null;
     _historyTransactions = [];
@@ -73,7 +85,53 @@ class AppState extends ChangeNotifier {
     _historyTab = 'Semua';
     _resetFilterValues();
     _loadError = null;
+  }
+
+  // ---------------- Pulihkan sesi ----------------
+  bool _loggingOut = false;
+
+  /// true jika pemulihan sesi gagal karena token ditolak server (401).
+  bool sessionExpiredOnRestore = false;
+
+  /// Diisi oleh main.dart: dipanggil saat sesi berakhir di tengah pemakaian
+  /// (token ditolak server), untuk mengembalikan user ke layar Login.
+  VoidCallback? onSessionExpired;
+
+  void _handleUnauthorized() {
+    // Abaikan jika memang belum/sedang tidak login (mis. salah password,
+    // atau 401 dari proses logout itu sendiri).
+    if (_currentUser == null || _loggingOut) return;
+    _api.clearToken();
+    _clearSessionData();
     notifyListeners();
+    onSessionExpired?.call();
+  }
+
+  /// Dipanggil splash. true = token tersimpan masih berlaku dan user sudah
+  /// dimuat, jadi app bisa langsung ke Beranda.
+  Future<bool> restoreSession() async {
+    try {
+      await _api.loadToken();
+      if (!_api.hasToken) return false;
+      _currentUser = await _auth.me();
+    } on ApiException catch (e) {
+      // 401 = token tidak berlaku lagi -> hapus. Error lain (offline, server
+      // mati): token dibiarkan, user diarahkan ke Login.
+      if (e.statusCode == 401) {
+        await _api.clearToken();
+        sessionExpiredOnRestore = true;
+      }
+      return false;
+    } catch (_) {
+      return false;
+    }
+    await _loadLocalPhoto();
+    _activeNavIndex = 0;
+    _historyTab = 'Semua';
+    _resetFilterValues();
+    await refreshAll();
+    notifyListeners();
+    return true;
   }
 
   Future<String?> updateProfile({String? username, String? password}) async {
